@@ -1,5 +1,33 @@
 # DeepStream deployment
 
+## Live RTSP camera (general defect detector)
+
+This full-frame flow accepts an RTSP camera and any YOLO detection model trained with `defectdet`. It uses GPU decoding and TensorRT inference, then writes one JSON line per frame. It does not need the capacitor tray ROIs.
+
+```text
+RTSP camera → nvurisrcbin → nvstreammux → nvinfer → metadata probe → fakesink
+                                                        ↓
+                                                detections.jsonl
+```
+
+On a machine with NVIDIA DeepStream, its Python bindings and the trained `best.pt`:
+
+```sh
+CUDA_VER=12.6 deploy/deepstream/setup.sh runs/defect_detector/train/weights/best.pt 1024 defect_detector
+python3 deploy/deepstream/gen_rtsp_config.py --model-name defect_detector
+python3 deploy/deepstream/rtsp.py 'rtsp://user:password@camera-host/stream' \
+  --mux-width 1920 --mux-height 1080 --source-name line-1 \
+  --out runs/deepstream/rtsp_detections.jsonl
+```
+
+Set `CUDA_VER` to the CUDA version included with the installed DeepStream release. The setup command exports ONNX, builds the custom YOLO parser and writes model-specific class labels. The config generator reads those labels to set the class count. The first inference run builds a TensorRT engine. Output records contain `source`, `frame`, `pts_ns` and `detections` (class ID, label, score and `[x1,y1,x2,y2]` box). `pts_ns` is the stream presentation timestamp, not a wall-clock time. If you use a model name other than `defect_detector`, pass its generated config and label file through `--infer-config` and `--labels`.
+
+`--mux-width` and `--mux-height` set the resolution sent into inference. For tiny defects in large frames, full-frame resizing may hide details; use the tiled `nvdspreprocess` pipeline below after adapting its ROIs to the camera and training tiles. The RTSP flow has no renderer and writes detections only.
+
+The RTSP pipeline requires `nvurisrcbin`, `nvstreammux`, `nvinfer` and the DeepStream Python bindings (`gi`, `pyds`). Run it in the DeepStream environment; these bindings are not installed by the Python package extras.
+
+## Capacitor tray images
+
 Runs the capacitor detector with NVIDIA DeepStream / TensorRT on full 5472x3648 frames.
 Each frame is cut into the same 9 overlapping tiles used for training (`tiling.ratio_overlap_tiles`),
 inferred as one batch, and duplicates from overlapping tiles are merged with NMS.

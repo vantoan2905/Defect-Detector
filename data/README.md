@@ -1,14 +1,13 @@
-# data/
+# Local data
 
-Everything in this folder except this file is git-ignored. Suggested layout:
+Everything here except this README is ignored by Git. For the general workflow, place image and sibling Labelme JSON pairs under `raw/<project>/`, then run `defectdet prepare` to create `processed/<project>/`.
 
-```
+```text
 data/
-├── archives/     # original archives: final_label_2.rar, duplicate_.rar,
-│                 # ann_defect_json.zip (master_box labels), processed_defect_data_updated.xlsx
-├── raw/          # camera images grouped by batch, e.g. raw/24.09/C05 VS-W/309.bmp
-├── interim/      # sorted-by-type images, cell CSVs, tiles, labelme JSON
-└── processed/    # YOLO datasets referenced by configs/*.yaml
-    ├── region_detector/YOLOv8Dataset/dataset.yaml
-    └── capacitor_detector/YOLODataset/dataset.yaml
+├── raw/my_product/          # image_001.png + image_001.json, etc.
+├── processed/defects/       # generated YOLO dataset, including dataset.yaml
+├── interim/                 # optional working files
+└── archives/                # original data archives
 ```
+
+The capacitor example uses `raw/` batch folders, `interim/` cell CSVs and tiles, and `processed/{region_detector,capacitor_detector}/`. See [the capacitor example](../docs/capacitor-example.md).

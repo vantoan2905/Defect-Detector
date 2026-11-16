@@ -3,9 +3,9 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "capacitor-detection"
+name = "defect-detector"
 version = "0.1.0"
-description = "Capacitor detection on tray images with YOLO and Faster R-CNN"
+description = "Configurable defect detection dataset preparation and YOLO training"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
@@ -22,6 +22,7 @@ frcnn = ["torch", "torchvision", "pillow"]
 dev = ["pytest", "ruff"]
 
 [project.scripts]
+defectdet = "defect_detector.cli:main"
 capdet = "capacitor_detection.cli:main"
 
 [tool.setuptools.packages.find]
