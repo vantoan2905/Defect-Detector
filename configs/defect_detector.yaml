@@ -1,0 +1,10 @@
+# General YOLO detection example. Edit model, data and training settings for your dataset.
+task: detect
+mode: train
+model: yolov8n.pt
+data: data/processed/defects/dataset.yaml
+epochs: 50
+imgsz: 1024
+batch: 8
+project: runs/defect_detector
+name: train
