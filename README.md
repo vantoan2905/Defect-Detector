@@ -89,6 +89,8 @@ Local output files (under Git-ignored `runs/`):
 
 See the [classification trial](docs/wafer-classification.md) for the preparation and training commands. The classifier checkpoint cannot be used directly as the RTSP detection model.
 
+For task-specific `label`, `train`, `val`, `test` and model commands, see [scripts/README.md](scripts/README.md).
+
 ## Project structure
 
 ```text
@@ -98,6 +100,7 @@ src/defect_detector/     General Labelme-to-YOLO preparation, training and CLI
 src/capacitor_detection/ Capacitor example and compatibility wrapper
 deploy/deepstream/       Capacitor example deployment
 tests/                   Dataset and legacy pipeline checks
+scripts/                 Detection, segmentation and classification workflows
 ```
 
 ## Development

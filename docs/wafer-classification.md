@@ -5,7 +5,7 @@ The archive at `/mnt/d/archive` contains 37,015 colored 52×52 wafer-map images 
 ## Dataset preparation
 
 ```sh
-python scripts/prepare_wafer_classification.py /mnt/d/archive data/processed/wafer_cls_v2
+python -m scripts.image_classification.label /mnt/d/archive data/processed/wafer_cls_v2
 ```
 
 The script creates symlinks to the colored images and a `split_manifest.csv`. It uses an 80/10/10 class-stratified split at the `map_sha256` group level, with seed 42. Counts: 29,615 train, 3,700 validation, 3,700 test. No map hash appears in more than one split. The source archive stays unchanged; `/mnt/d/archive` must remain mounted while training or evaluating. To train on raw categorical maps instead, use `--representation raw` and a different output directory.
