@@ -65,8 +65,9 @@ def prepare(
     val_fraction: float = 0.2,
     seed: int = 42,
     min_visible: float = 0.5,
+    test_fraction: float = 0.0,
 ) -> dict[str, int]:
-    """Write YOLO train/val images and labels, splitting by source image to avoid leakage."""
+    """Write YOLO train/val/test images and labels, splitting by source image."""
     source, output = Path(source), Path(output)
     if not source.is_dir():
         raise NotADirectoryError(source)
@@ -76,6 +77,8 @@ def prepare(
         raise ValueError("output directory must be outside the source folder")
     if not 0 < val_fraction < 1:
         raise ValueError("val_fraction must be between 0 and 1")
+    if not 0 <= test_fraction < 1 or val_fraction + test_fraction >= 1:
+        raise ValueError("test_fraction must be nonnegative and val + test must be below 1")
     if not 0 <= min_visible <= 1:
         raise ValueError("min_visible must be between 0 and 1")
     _starts(1, tile_size, overlap)
@@ -91,14 +94,20 @@ def prepare(
     random.Random(seed).shuffle(shuffled)
     val_count = max(1, min(len(images) - 1, round(len(images) * val_fraction)))
     validation = set(shuffled[:val_count])
+    test_count = max(1, round(len(images) * test_fraction)) if test_fraction else 0
+    if val_count + test_count >= len(images):
+        raise ValueError("split fractions leave no training images")
+    testing = set(shuffled[val_count : val_count + test_count])
     counts = {"train": 0, "val": 0}
+    if test_count:
+        counts["test"] = 0
     seen = set()
     for image_path, objects in records:
         image = cv2.imread(str(image_path))
         if image is None:
             raise ValueError(f"cannot read image: {image_path}")
         height, width = image.shape[:2]
-        split = "val" if image_path in validation else "train"
+        split = "val" if image_path in validation else "test" if image_path in testing else "train"
         stem = "__".join(image_path.relative_to(source).with_suffix("").parts)
         for y0 in _starts(height, tile_size, overlap):
             for x0 in _starts(width, tile_size, overlap):
@@ -118,5 +127,7 @@ def prepare(
                 label_out.write_text("\n".join(lines) + ("\n" if lines else ""))
                 counts[split] += 1
     dataset = {"path": str(output.resolve()), "train": "images/train", "val": "images/val", "names": labels}
+    if test_count:
+        dataset["test"] = "images/test"
     (output / "dataset.yaml").write_text(yaml.safe_dump(dataset, sort_keys=False, allow_unicode=True))
     return counts

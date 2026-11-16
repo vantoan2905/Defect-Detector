@@ -53,6 +53,44 @@ The original capacitor pipeline includes tray region detection, regular cell gri
 
 For a live RTSP camera on an NVIDIA GPU, see the [DeepStream RTSP flow](deploy/deepstream/README.md#live-rtsp-camera-general-defect-detector).
 
+## Wafer classification trial: test output
+
+The archive at `/mnt/d/archive` contains 52×52 wafer-map images with **38 image-level classes**. It has no bounding boxes, so this experiment trains a classifier rather than an object detector. The 37,015 images were split by map hash into 29,615 train, 3,700 validation and 3,700 test images, with no duplicate hash shared across splits.
+
+YOLOv8n-cls was trained for 2 epochs at image size 64 on an RTX 5060 Laptop GPU. Evaluation of the best checkpoint on the independent test split produced:
+
+| Test samples | Top-1 accuracy | Top-5 accuracy |
+| ---: | ---: | ---: |
+| 3,700 | **84.76%** | **99.89%** |
+
+```text
+                   all      0.848      0.999
+TEST_TOP1 0.8475675582885742
+TEST_TOP5 0.998918890953064
+```
+
+Local output files (under Git-ignored `runs/`):
+
+| File | Contents |
+| --- | --- |
+| `runs/classify/runs/wafer_cls_v2/smoke/weights/best.pt` | Best classifier checkpoint |
+| `runs/classify/runs/wafer_cls_v2/smoke/results.csv` | Per-epoch train and validation metrics |
+| `runs/wafer_cls_v2/test_eval/metrics.json` | Test metrics |
+| [`docs/assets/wafer-classification/confusion_matrix.png`](docs/assets/wafer-classification/confusion_matrix.png) | Test confusion matrix (tracked in Git) |
+| [`docs/assets/wafer-classification/confusion_matrix_normalized.png`](docs/assets/wafer-classification/confusion_matrix_normalized.png) | Normalized test confusion matrix (tracked in Git) |
+
+**Test confusion matrix (normalized)**
+
+![Normalized confusion matrix for the MixedWM38 V2 test split](docs/assets/wafer-classification/confusion_matrix_normalized.png)
+
+**Test confusion matrix (counts)**
+
+![Confusion matrix with counts for the MixedWM38 V2 test split](docs/assets/wafer-classification/confusion_matrix.png)
+
+See the [classification trial](docs/wafer-classification.md) for the preparation and training commands. The classifier checkpoint cannot be used directly as the RTSP detection model.
+
+For task-specific `label`, `train`, `val`, `test` and model commands, see [scripts/README.md](scripts/README.md).
+
 ## Project structure
 
 ```text
@@ -62,6 +100,7 @@ src/defect_detector/     General Labelme-to-YOLO preparation, training and CLI
 src/capacitor_detection/ Capacitor example and compatibility wrapper
 deploy/deepstream/       Capacitor example deployment
 tests/                   Dataset and legacy pipeline checks
+scripts/                 Detection, segmentation and classification workflows
 ```
 
 ## Development
